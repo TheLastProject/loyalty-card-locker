@@ -2,7 +2,10 @@ package protect.card_locker;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,6 +37,7 @@ import com.google.zxing.BarcodeFormat;
 
 import java.util.List;
 
+import androidx.palette.graphics.Palette;
 import protect.card_locker.preferences.Settings;
 
 public class LoyaltyCardViewActivity extends AppCompatActivity
@@ -271,13 +275,12 @@ public class LoyaltyCardViewActivity extends AppCompatActivity
         storeName.setText(loyaltyCard.store);
         storeName.setTextSize(settings.getCardTitleFontSize());
 
+        // TODO: Grab color from image
         int backgroundHeaderColor;
-        if(loyaltyCard.headerColor != null)
-        {
+
+        if (loyaltyCard.headerColor != null) {
             backgroundHeaderColor = loyaltyCard.headerColor;
-        }
-        else
-        {
+        } else {
             backgroundHeaderColor = LetterBitmap.getDefaultColor(this, loyaltyCard.store);
         }
 
@@ -313,7 +316,7 @@ public class LoyaltyCardViewActivity extends AppCompatActivity
         }
 
         // Set shadow colour of store text so even same color on same color would be readable
-        storeName.setShadowLayer(1, 1, 1, backgroundNeedsDarkIcons ? Color.BLACK : Color.WHITE);
+        storeName.setShadowLayer(1, 1, 1, backgroundNeedsDarkIcons ? Color.WHITE : Color.BLACK);
 
         if(format != null)
         {

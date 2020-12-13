@@ -50,6 +50,7 @@
                     android:layout_height="@dimen/cardThumbnailSize"
                     android:layout_marginEnd="@dimen/activity_margin"
                     android:layout_gravity="center_vertical"
+                    app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="4dp"
                     android:paddingHorizontal="@dimen/inputPadding"
                     app:cardElevation="0dp">

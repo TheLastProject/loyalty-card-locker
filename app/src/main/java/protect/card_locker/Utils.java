@@ -5,14 +5,19 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
+
+import java.io.ByteArrayOutputStream;
 
 import androidx.core.graphics.ColorUtils;
 
@@ -25,6 +30,7 @@ public class Utils {
     // Activity request codes
     public static final int MAIN_REQUEST = 1;
     public static final int SELECT_BARCODE_REQUEST = 2;
+    public static final int PICK_IMAGE = 3;
 
     static final double LUMINANCE_MIDPOINT = 0.5;
 
@@ -134,5 +140,57 @@ public class Utils {
         Log.i(TAG, "Read format: " + format);
 
         return new BarcodeValues(format, contents);
+    }
+
+    static public byte[] bitmapToByteArray(Bitmap bitmap) {
+        if (bitmap == null) {
+            return null;
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, bos);
+        return bos.toByteArray();
+    }
+
+    static public Bitmap byteArrayToBitmap(byte[] byteArray) {
+        if (byteArray == null) {
+            return null;
+        }
+
+        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+    }
+
+    static public String bitmapToBase64(Bitmap bitmap) {
+        return Base64.encodeToString(bitmapToByteArray(bitmap), Base64.URL_SAFE);
+    }
+
+    static public Bitmap base64ToBitmap(String base64) {
+        return byteArrayToBitmap(Base64.decode(base64, Base64.URL_SAFE));
+    }
+
+    static public Bitmap resizeBitmapForIcon(Bitmap bitmap) {
+        if (bitmap == null) {
+            return null;
+        }
+
+        Integer maxSize = 128;
+
+        Integer width = bitmap.getWidth();
+        Integer height = bitmap.getHeight();
+
+        if (height > width) {
+            Integer scale = height / maxSize;
+            height = maxSize;
+            width = width / scale;
+        } else if (width > height) {
+            Integer scale = width / maxSize;
+            width = maxSize;
+            height = height / scale;
+        } else {
+            height = maxSize;
+            width = maxSize;
+        }
+
+        return Bitmap.createScaledBitmap(bitmap, width, height, true);
     }
 }

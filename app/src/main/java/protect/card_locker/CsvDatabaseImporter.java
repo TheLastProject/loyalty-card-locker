@@ -1,6 +1,9 @@
 package protect.card_locker;
 
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -193,6 +196,22 @@ public class CsvDatabaseImporter implements DatabaseImporter
     }
 
     /**
+     * Extract an image from the items array. The index into the array
+     * is determined by looking up the index in the fields map using the
+     * "key" as the key. If no such key exists, defaultValue is returned
+     * if it is not null. Otherwise, a FormatException is thrown.
+     */
+    private Bitmap extractImage(String key, CSVRecord record)
+    {
+        if(record.isMapped(key))
+        {
+            return Utils.base64ToBitmap(record.get(key));
+        }
+
+        return null;
+    }
+
+    /**
      * Extract a string from the items array. The index into the array
      * is determined by looking up the index in the fields map using the
      * "key" as the key. If no such key exists, defaultValue is returned
@@ -288,7 +307,10 @@ public class CsvDatabaseImporter implements DatabaseImporter
             // We catch this exception so we can still import old backups
         }
         if (starStatus != 1) starStatus = 0;
-        helper.insertLoyaltyCard(database, id, store, note, cardId, barcodeType, headerColor, starStatus);
+
+        Bitmap icon = extractImage(DBHelper.LoyaltyCardDbIds.ICON, record);
+
+        helper.insertLoyaltyCard(database, id, store, note, cardId, barcodeType, headerColor, starStatus, icon);
     }
 
     /**

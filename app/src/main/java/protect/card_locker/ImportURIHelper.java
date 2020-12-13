@@ -2,6 +2,7 @@ package protect.card_locker;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import java.io.InvalidObjectException;
 
@@ -12,6 +13,7 @@ public class ImportURIHelper {
     private static final String BARCODE_TYPE = DBHelper.LoyaltyCardDbIds.BARCODE_TYPE;
 
     private static final String HEADER_COLOR = DBHelper.LoyaltyCardDbIds.HEADER_COLOR;
+    private static final String ICON = DBHelper.LoyaltyCardDbIds.ICON;
 
     private final Context context;
     private final String host;
@@ -42,6 +44,7 @@ public class ImportURIHelper {
             // These values are allowed to be null
             Integer headerColor = null;
             Integer headerTextColor = null;
+            Bitmap icon = null;
 
             String store = uri.getQueryParameter(STORE);
             String note = uri.getQueryParameter(NOTE);
@@ -55,7 +58,14 @@ public class ImportURIHelper {
                 headerColor = Integer.parseInt(unparsedHeaderColor);
             }
 
-            return new LoyaltyCard(-1, store, note, cardId, barcodeType, headerColor, headerTextColor, 0);
+            String unparsedIcon = uri.getQueryParameter(ICON);
+            if(unparsedIcon != null)
+            {
+                // We can't trust the icon to not be evil so resize it
+                icon = Utils.resizeBitmapForIcon(Utils.base64ToBitmap(unparsedIcon));
+            }
+
+            return new LoyaltyCard(-1, store, note, cardId, barcodeType, headerColor, headerTextColor, 0, icon);
         } catch (NullPointerException | NumberFormatException ex) {
             throw new InvalidObjectException("Not a valid import URI");
         }
@@ -74,6 +84,10 @@ public class ImportURIHelper {
         if(loyaltyCard.headerColor != null)
         {
             uriBuilder.appendQueryParameter(HEADER_COLOR, loyaltyCard.headerColor.toString());
+        }
+        if(loyaltyCard.icon != null)
+        {
+            uriBuilder.appendQueryParameter(ICON, Utils.bitmapToBase64(Utils.resizeBitmapForIcon(loyaltyCard.icon)));
         }
         //StarStatus will not be exported
         return uriBuilder.build();

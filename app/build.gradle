@@ -56,6 +56,7 @@ dependencies {
     implementation group: 'com.google.guava', name: 'guava', version: '20.0'
     implementation "com.vanniktech:vntnumberpickerpreference:1.0.0"
     implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.palette:palette:1.0.0'
     testImplementation 'junit:junit:4.12'
     testImplementation "org.robolectric:robolectric:4.0.2"
 }

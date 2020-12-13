@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -17,6 +19,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.palette.graphics.Palette;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -35,11 +38,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.zxing.BarcodeFormat;
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 import com.jaredrummler.android.colorpicker.ColorPickerDialog;
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.InvalidObjectException;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +72,7 @@ public class LoyaltyCardEditActivity extends AppCompatActivity
 
     Uri importLoyaltyCardUri = null;
     Integer headingColorValue = null;
+    Bitmap icon = null;
 
     DBHelper db;
     ImportURIHelper importUriHelper;
@@ -247,6 +251,11 @@ public class LoyaltyCardEditActivity extends AppCompatActivity
                 }
             }
 
+            if(icon == null)
+            {
+                icon = loyaltyCard.icon;
+            }
+
             setTitle(R.string.editCardTitle);
         }
         else if(importLoyaltyCardUri != null)
@@ -266,6 +275,7 @@ public class LoyaltyCardEditActivity extends AppCompatActivity
             cardIdFieldView.setText(importCard.cardId);
             barcodeTypeField.setText(importCard.barcodeType);
             headingColorValue = importCard.headerColor;
+            icon = importCard.icon;
         }
         else
         {
@@ -319,7 +329,17 @@ public class LoyaltyCardEditActivity extends AppCompatActivity
             colors.recycle();
         }
 
-        thumbnail.setOnClickListener(new ColorSelectListener(headingColorValue));
+        //thumbnail.setOnClickListener(new ColorSelectListener(headingColorValue));
+
+        thumbnail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), Utils.PICK_IMAGE);
+            }
+        });
 
         if (!initDone) {
             hasChanged = false;
@@ -484,12 +504,12 @@ public class LoyaltyCardEditActivity extends AppCompatActivity
 
         if(updateLoyaltyCard)
         {   //update of "starStatus" not necessary, since it cannot be changed in this activity (only in ViewActivity)
-            db.updateLoyaltyCard(loyaltyCardId, store, note, cardId, barcodeType, headingColorValue);
+            db.updateLoyaltyCard(loyaltyCardId, store, note, cardId, barcodeType, headingColorValue, icon);
             Log.i(TAG, "Updated " + loyaltyCardId + " to " + cardId);
         }
         else
         {
-            loyaltyCardId = (int)db.insertLoyaltyCard(store, note, cardId, barcodeType, headingColorValue, 0);
+            loyaltyCardId = (int)db.insertLoyaltyCard(store, note, cardId, barcodeType, headingColorValue, 0, icon);
         }
 
         db.setLoyaltyCardGroups(loyaltyCardId, selectedGroups);
@@ -565,6 +585,18 @@ public class LoyaltyCardEditActivity extends AppCompatActivity
     {
         super.onActivityResult(requestCode, resultCode, intent);
 
+        if (requestCode == Utils.PICK_IMAGE) {
+            InputStream inputStream = null;
+            try {
+                inputStream = getContentResolver().openInputStream(intent.getData());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            icon = Utils.resizeBitmapForIcon(BitmapFactory.decodeStream(inputStream));
+            headingColorValue = Palette.from(icon).generate().getDominantColor(headingColorValue);
+            return;
+        }
+
         BarcodeValues barcodeValues = Utils.parseSetBarcodeActivityResult(requestCode, resultCode, intent);
 
         barcodeType = barcodeValues.format();
@@ -605,18 +637,20 @@ public class LoyaltyCardEditActivity extends AppCompatActivity
     }
 
     private void generateIcon(String store) {
-        if (headingColorValue == null) {
+        if (icon != null) {
+            thumbnail.setBackground(null);
+            thumbnail.setImageBitmap(icon);
             return;
-        }
+        } else if (headingColorValue != null) {
+            thumbnail.setBackgroundColor(headingColorValue);
 
-        thumbnail.setBackgroundColor(headingColorValue);
+            LetterBitmap letterBitmap = Utils.generateIcon(this, store, headingColorValue);
 
-        LetterBitmap letterBitmap = Utils.generateIcon(this, store, headingColorValue);
-
-        if (letterBitmap != null) {
-            thumbnail.setImageBitmap(letterBitmap.getLetterTile());
-        } else {
-            thumbnail.setImageBitmap(null);
+            if (letterBitmap != null) {
+                thumbnail.setImageBitmap(letterBitmap.getLetterTile());
+            } else {
+                thumbnail.setImageBitmap(null);
+            }
         }
 
         thumbnail.setMinimumWidth(thumbnail.getHeight());

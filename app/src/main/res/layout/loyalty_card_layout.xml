@@ -12,6 +12,7 @@
         android:layout_width="@dimen/cardThumbnailSize"
         android:layout_height="@dimen/cardThumbnailSize"
         android:layout_marginEnd="@dimen/activity_margin"
+        app:cardBackgroundColor="@android:color/transparent"
         app:cardCornerRadius="4dp"
         app:cardElevation="0dp">
 

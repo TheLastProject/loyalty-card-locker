@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ public class DBHelper extends SQLiteOpenHelper
 {
     public static final String DATABASE_NAME = "Catima.db";
     public static final int ORIGINAL_DATABASE_VERSION = 1;
-    public static final int DATABASE_VERSION = 6;
+    public static final int DATABASE_VERSION = 7;
 
     static class LoyaltyCardDbGroups
     {
@@ -34,6 +35,7 @@ public class DBHelper extends SQLiteOpenHelper
         public static final String CARD_ID = "cardid";
         public static final String BARCODE_TYPE = "barcodetype";
         public static final String STAR_STATUS = "starstatus";
+        public static final String ICON = "icon";
     }
 
     static class LoyaltyCardDbIdsGroups
@@ -65,7 +67,8 @@ public class DBHelper extends SQLiteOpenHelper
                 LoyaltyCardDbIds.HEADER_TEXT_COLOR + " INTEGER," +
                 LoyaltyCardDbIds.CARD_ID + " TEXT not null," +
                 LoyaltyCardDbIds.BARCODE_TYPE + " TEXT not null," +
-                LoyaltyCardDbIds.STAR_STATUS + " INTEGER DEFAULT '0' )");
+                LoyaltyCardDbIds.STAR_STATUS + " INTEGER DEFAULT '0'," +
+                LoyaltyCardDbIds.ICON + " BLOB)");
 
         // create associative table for cards in groups
         db.execSQL("create table " + LoyaltyCardDbIdsGroups.TABLE + "(" +
@@ -118,12 +121,21 @@ public class DBHelper extends SQLiteOpenHelper
             db.execSQL("ALTER TABLE " + LoyaltyCardDbGroups.TABLE
                     + " ADD COLUMN " + LoyaltyCardDbGroups.ORDER + " INTEGER DEFAULT '0'");
         }
+        
+        // Upgrade from version 6 to 7
+        if (oldVersion < 7 && newVersion >= 7)
+        {
+            db.execSQL("ALTER TABLE " + LoyaltyCardDbIds.TABLE
+                    + " ADD COLUMN " + LoyaltyCardDbIds.ICON + " BLOB");
+        }
     }
 
     public long insertLoyaltyCard(final String store, final String note, final String cardId,
                                   final String barcodeType, final Integer headerColor,
-                                  final int starStatus)
+                                  final int starStatus, final Bitmap icon)
     {
+
+
         SQLiteDatabase db = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(LoyaltyCardDbIds.STORE, store);
@@ -133,6 +145,8 @@ public class DBHelper extends SQLiteOpenHelper
         contentValues.put(LoyaltyCardDbIds.HEADER_COLOR, headerColor);
         contentValues.put(LoyaltyCardDbIds.HEADER_TEXT_COLOR, Color.WHITE);
         contentValues.put(LoyaltyCardDbIds.STAR_STATUS, starStatus);
+        contentValues.put(LoyaltyCardDbIds.ICON, Utils.bitmapToByteArray(icon));
+
         final long newId = db.insert(LoyaltyCardDbIds.TABLE, null, contentValues);
         return newId;
     }
@@ -140,7 +154,7 @@ public class DBHelper extends SQLiteOpenHelper
     public boolean insertLoyaltyCard(final SQLiteDatabase db, final int id, final String store,
                                      final String note, final String cardId,
                                      final String barcodeType, final Integer headerColor,
-                                     final int starStatus)
+                                     final int starStatus, final Bitmap icon)
     {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LoyaltyCardDbIds.ID, id);
@@ -151,13 +165,14 @@ public class DBHelper extends SQLiteOpenHelper
         contentValues.put(LoyaltyCardDbIds.HEADER_COLOR, headerColor);
         contentValues.put(LoyaltyCardDbIds.HEADER_TEXT_COLOR, Color.WHITE);
         contentValues.put(LoyaltyCardDbIds.STAR_STATUS,starStatus);
+        contentValues.put(LoyaltyCardDbIds.ICON, Utils.bitmapToByteArray(icon));
         final long newId = db.insert(LoyaltyCardDbIds.TABLE, null, contentValues);
         return (newId != -1);
     }
 
     public boolean updateLoyaltyCard(final int id, final String store, final String note,
                                      final String cardId, final String barcodeType,
-                                     final Integer headerColor)
+                                     final Integer headerColor, final Bitmap icon)
     {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -167,6 +182,7 @@ public class DBHelper extends SQLiteOpenHelper
         contentValues.put(LoyaltyCardDbIds.BARCODE_TYPE, barcodeType);
         contentValues.put(LoyaltyCardDbIds.HEADER_COLOR, headerColor);
         contentValues.put(LoyaltyCardDbIds.HEADER_TEXT_COLOR, Color.WHITE);
+        contentValues.put(LoyaltyCardDbIds.ICON, Utils.bitmapToByteArray(icon));
         int rowsUpdated = db.update(LoyaltyCardDbIds.TABLE, contentValues,
                 LoyaltyCardDbIds.ID + "=?",
                 new String[]{Integer.toString(id)});

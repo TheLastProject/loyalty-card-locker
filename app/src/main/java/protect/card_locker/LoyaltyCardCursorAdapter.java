@@ -60,9 +60,21 @@ class LoyaltyCardCursorAdapter extends CursorAdapter
             noteField.setVisibility(View.GONE);
         }
 
-        if (loyaltyCard.starStatus!=0) star.setVisibility(View.VISIBLE);
-            else star.setVisibility(View.GONE);
+        if (loyaltyCard.starStatus!=0)
+        {
+            star.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            star.setVisibility(View.GONE);
+        }
 
-        thumbnail.setImageBitmap(Utils.generateIcon(context, loyaltyCard.store, loyaltyCard.headerColor).getLetterTile());
+        if (loyaltyCard.icon != null) {
+            thumbnail.setImageBitmap(loyaltyCard.icon);
+        }
+        else
+        {
+            thumbnail.setImageBitmap(Utils.generateIcon(context, loyaltyCard.store, loyaltyCard.headerColor).getLetterTile());
+        }
     }
 }
